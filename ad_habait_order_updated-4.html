@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>עד הבית — הזמנה אונליין</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Arial,sans-serif;background:#f5f5f5;color:#222}
+header{position:sticky;top:0;z-index:20;background:#111;color:white;padding:13px 15px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:25px;font-weight:900}.cart{border:0;background:#f5c542;color:#111;border-radius:22px;padding:10px 15px;font-weight:900}
+main{max-width:760px;margin:auto;padding:14px 12px 120px}.hero{background:#222;color:#fff;border-radius:18px;padding:23px 20px;margin-bottom:12px}.hero h1{margin:0 0 5px;font-size:31px}.hero p{margin:0;color:#ddd}
+.tabs{display:flex;gap:8px;overflow:auto;position:sticky;top:59px;z-index:10;background:#f5f5f5;padding:8px 0}.tabs button{white-space:nowrap;border:1px solid #ddd;background:white;padding:10px 14px;border-radius:22px;font-weight:800}
+.section{scroll-margin-top:125px}.section-title{font-size:23px;margin:24px 3px 8px;font-weight:900}.card{background:#fff;border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 1px 5px #0001}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.name{font-weight:900;font-size:17px}.price{font-weight:900}.add{border:0;background:#111;color:#fff;border-radius:20px;padding:9px 16px;font-weight:900}
+.checklist{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.option{background:#f7f7f7;border-radius:11px;padding:10px;display:flex;gap:8px;align-items:center}.option input{width:18px;height:18px}
+.note{width:100%;min-height:75px;border:1px solid #ddd;border-radius:12px;padding:10px;font-size:15px}.primary{width:100%;border:0;background:#159447;color:white;border-radius:14px;padding:14px;font-size:17px;font-weight:900;margin-top:12px}
+.checkout{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;padding:10px 12px;z-index:25}.checkout-inner{max-width:760px;margin:auto;display:flex;gap:10px;align-items:center}.checkout button{flex:1;background:#159447;color:white;border:0;border-radius:14px;padding:14px;font-size:17px;font-weight:900}.total{font-weight:900;min-width:90px;text-align:center}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:50;padding:16px}.modal.show{display:block}.sheet{background:#fff;max-width:700px;margin:auto;border-radius:20px;padding:18px;max-height:94vh;overflow:auto}.close{float:left;border:0;background:#eee;border-radius:50%;width:34px;height:34px;font-size:20px}
+.notice{background:#fff8dc;border-radius:12px;padding:11px;margin-top:10px;font-size:13px}.payment{border:1px solid #ddd;border-radius:14px;padding:12px;margin-top:10px}.secure{font-size:13px;color:#555;margin-top:8px}
+@media(max-width:500px){.checklist{grid-template-columns:1fr}.hero h1{font-size:27px}}
+</style>
+</head>
+<body>
+<header><div class="logo">עד הבית</div><button class="cart" onclick="openCart()">🛒 סל (<span id="count">0</span>)</button></header>
+<main>
+<section class="hero"><h1>עד הבית</h1><p>בוחרים את המנה בדיוק כמו שאוהבים ❤️</p></section>
+<nav class="tabs">
+<button onclick="go('mains')">🥪 עיקריות</button><button onclick="go('snacks')">🍟 נשנושים</button><button onclick="go('salads')">🥗 סלטים</button><button onclick="go('kids')">👶 ילדים</button><button onclick="go('sauces')">🥫 רטבים</button><button onclick="go('drinks')">🥤 שתייה</button>
+</nav>
+<section id="mains" class="section"><h2 class="section-title">🥪 עיקריות</h2><div id="mainsList"></div></section>
+<section id="snacks" class="section"><h2 class="section-title">🍟 נשנושים</h2><div id="snacksList"></div></section>
+<section id="salads" class="section"><h2 class="section-title">🥗 סלטים</h2><div id="saladsList"></div></section>
+<section id="kids" class="section"><h2 class="section-title">👶 מנות ילדים</h2><div id="kidsList"></div></section>
+<section id="sauces" class="section"><h2 class="section-title">🥫 רטבים בתוספת תשלום</h2><div id="saucesList"></div></section><section id="drinks" class="section"><h2 class="section-title">🥤 שתייה</h2><div id="drinksList"></div></section>
+</main>
+<div class="checkout"><div class="checkout-inner"><div class="total">סה"כ<br><span id="total">0</span> ₪</div><button onclick="openCart()">צפייה בהזמנה ושליחה</button></div></div>
+<div class="modal" id="modal"><div class="sheet"><button class="close" onclick="closeModal()">×</button><div id="modalContent"></div></div></div>
+
+<script>
+const sauceOptions=[["פסטו",4],["צ'ימיצ'ורי",4],["רוטב שום",4],["צ'ילי מתוק",3],["רוטב חריף",3],["חמוץ מתוק",3],["ברביקיו",4],["טחינה",4],["חרדל",3],["איולי קארי",4],["איולי צ'יפוטלה",4],["קטשופ",2],["מיונז",2]];
+const veg=["חסה","עגבניה","בצל סגול","מלפפון חמוץ"];
+const mains=[["המבורגר 200 גרם",50],["מינוט אנטריקוט",55],["מינוט סינטה",50],["מינוט פרגית",50],["מינוט חזה עוף",45],["קבב מזרחי",45],["מיני מרגז",45]];
+const snacks=[["אגרול 2 יח'",20],["טבעות בצל",15],["צ'יפס תפוגן מסולסל",15],["כדורי פירה",15],["כרובית מצופה",20],["נאמס 2 יח'",30],["הום פרייז בצ'ילי",20],["כנפיים בצ'ילי 8 יח'",28],["כנפיים בצ'ילי 12 יח'",32]];
+const salads=[["סלט עלים וירקות ברוטב וינגרט",25],["סלט שורשים ברוטב לימון",25],["חמוצי הבית — מבחר ירקות בתחמיץ",12],["מיקס זיתים בטיבול הבית",14],["קורנישונים",12]];
+const kids=[["בורגר ילדים 160 גרם",50],["שניצלונים",50]];
+const drinks=[["קולה",7],["קולה זירו",7],["פאנטה",7],["ספרייט",7],["סודה",7],["מים",5],["קולה זכוכית",10],["קולה זירו זכוכית",10],["פריגת",8]];
+let cart=[];
+
+function render(arr,id,type){document.getElementById(id).innerHTML=arr.map((x,i)=>`<div class="card"><div class="row"><div><div class="name">${x[0]}</div><div class="price">${x[1]} ₪</div></div><button class="add" onclick="customize('${type}',${i})">הוסף</button></div></div>`).join("")}
+const sauces=sauceOptions;render(mains,"mainsList","main");render(snacks,"snacksList","snack");render(salads,"saladsList","salad");render(kids,"kidsList","kid");render(sauces,"saucesList","sauceExtra");render(drinks,"drinksList","drink");
+function go(id){document.getElementById(id).scrollIntoView({behavior:"smooth",block:"start"})}
+
+function customize(type,i){
+ const a={main:mains,snack:snacks,salad:salads,kid:kids,drink:drinks,sauceExtra:sauces}[type],x=a[i];let c="";
+ if(type==="main"){
+  c=`<h2>הרכבת ${x[0]}</h2>
+  <div class="notice"><b>🥬 ירקות</b><br>כל הירקות מגיעים כברירת מחדל. סמנו רק את הירקות שלא תרצו במנה.</div>
+  <div class="checklist">${veg.map(v=>`<label class="option"><input type="checkbox" value="${v}" class="vegRemove"> ללא ${v}</label>`).join("")}</div>
+  <p><b>🥫 רטבים — עד 4 בלבד</b></p>
+  <div class="checklist">${sauceOptions.map(s=>`<label class="option"><input type="checkbox" value="${s[0]}" class="sauce"> ${s[0]}</label>`).join("")}</div>
+  <div class="notice"><b>🍟 רוצה ארוחה?</b><br>לאחר בחירת העיקרית אפשר לשדרג לארוחה בתוספת 14 ₪.</div>
+  <label class="option" style="margin-top:10px"><input type="checkbox" id="meal"> בוא נשדרג לארוחה +14 ₪</label>
+  <div id="mealBox" style="display:none">
+   <p><b>תוספת אחת</b></p><div class="checklist">${["צ'יפס","טבעות בצל","כדורי פירה"].map(v=>`<label class="option"><input type="radio" name="side" value="${v}"> ${v}</label>`).join("")}</div>
+   <p><b>פחית אחת</b></p><div class="checklist">${["קולה","קולה זירו","פאנטה","ספרייט"].map(v=>`<label class="option"><input type="radio" name="drink" value="${v}"> ${v}</label>`).join("")}</div>
+   <p><b>2 רטבים בצד</b></p><div class="checklist">${sauceOptions.map(s=>`<label class="option"><input type="checkbox" value="${s[0]}" class="sideSauce"> ${s[0]}</label>`).join("")}</div>
+  </div>
+  <p><b>הערה למנה</b></p><textarea class="note" id="note" placeholder="למשל: בלי חריף, עשוי היטב..."></textarea>
+  <button class="primary" onclick="addMain(${i})">הוסף עיקרי — ${x[1]} ₪</button>`;
+ } else if(type==="snack"){
+  c=`<h2>${x[0]} — ${x[1]} ₪</h2><p><b>מגיע עם רוטב אחד לבחירה</b></p><div class="checklist">${sauceOptions.map(s=>`<label class="option"><input type="radio" name="snackSauce" value="${s[0]}"> ${s[0]}</label>`).join("")}</div><button class="primary" onclick="addSnack(${i})">הוסף להזמנה</button>`;
+ } else {
+  c=`<h2>${type==="sauceExtra"?"רוטב "+x[0]:x[0]} — ${x[1]} ₪</h2><button class="primary" onclick="addSimple('${type}',${i})">הוסף להזמנה — ${x[1]} ₪</button>`;
+ }
+ document.getElementById("modalContent").innerHTML=c;
+ if(type==="main")document.getElementById("meal").onchange=e=>document.getElementById("mealBox").style.display=e.target.checked?"block":"none";
+ document.getElementById("modal").classList.add("show");
+}
+function addMain(i){
+ const x=mains[i];
+ const removed=[...document.querySelectorAll(".vegRemove:checked")].map(e=>e.value);
+ const included=veg.filter(v=>!removed.includes(v));
+ const ss=[...document.querySelectorAll(".sauce:checked")];
+ if(ss.length>4)return alert("אפשר לבחור עד 4 רטבים בלבד.");
+ const meal=document.getElementById("meal").checked;
+ const sideSauces=[...document.querySelectorAll(".sideSauce:checked")];
+ if(meal&&sideSauces.length>2)return alert("אפשר לבחור עד 2 רטבים בצד.");
+ const side=document.querySelector('input[name="side"]:checked')?.value;
+ const drink=document.querySelector('input[name="drink"]:checked')?.value;
+ if(meal&&(!side||!drink))return alert("בארוחה יש לבחור תוספת ופחית.");
+ const price=x[1]+(meal?14:0);
+ const details=[meal?"ארוחה":"מנה",`מנה: ${x[0]}`,`ירקות: ${included.length?included.join(", "):"ללא ירקות"}`,removed.length?`ללא: ${removed.join(", ")}`:"",`רטבים: ${ss.map(e=>e.value).join(", ")||"ללא"}`,meal?`תוספת: ${side}`:"",meal?`שתייה: ${drink}`:"",meal?`רטבים בצד: ${sideSauces.map(e=>e.value).join(", ")||"לא נבחרו"}`:"",`הערה: ${document.getElementById("note").value||"—"}`].filter(Boolean).join("\n");
+ cart.push({name:meal?"ארוחה — "+x[0]:x[0],price,details,meal});closeModal();update();
+}
+function addSnack(i){const x=snacks[i],s=document.querySelector('input[name="snackSauce"]:checked')?.value;cart.push({name:x[0],price:x[1],details:`רוטב: ${s||"לא נבחר"}`,meal:false});closeModal();update()}
+function addSimple(type,i){
+ const a={salad:salads,kid:kids,drink:drinks,sauceExtra:sauces}[type],x=a[i];
+ cart.push({name:type==="sauceExtra"?"רוטב "+x[0]:x[0],price:x[1],details:type==="kid"?"מגיע עם צ'יפס, פחית, קטשופ ומיונז":type==="sauceExtra"?"רטב בתוספת תשלום":"","meal":false});
+ closeModal();update()
+}
+function update(){document.getElementById("count").textContent=cart.length;document.getElementById("total").textContent=cart.reduce((a,x)=>a+x.price,0)}
+function removeItem(i){cart.splice(i,1);update();openCart()}
+function openCart(){
+ const total=cart.reduce((a,x)=>a+x.price,0);
+ document.getElementById("modalContent").innerHTML=`<h2>🛒 ההזמנה שלי</h2>${cart.length?cart.map((x,i)=>`<div class="card"><div class="row"><b>${i+1}. ${x.name}</b><b>${x.price} ₪</b></div><div style="margin-top:8px">${x.details.replace(/\n/g,"<br>")}</div><button class="add" style="margin-top:9px;background:#777" onclick="removeItem(${i})">הסר</button></div>`).join(""):"<p>הסל עדיין ריק.</p>"}${cart.length?`<h2>סה"כ: ${total} ₪</h2><textarea class="note" id="customerNote" placeholder="שם להזמנה / טלפון / הערה כללית"></textarea><div class="payment"><b>💳 תשלום מאובטח</b><p>בגרסה זו מוכן מקום לחיבור ספק סליקה. פרטי אשראי לא נשלחים בוואטסאפ.</p><label class="option"><input type="radio" name="payment" value="online" checked> תשלום מאובטח באשראי</label><label class="option"><input type="radio" name="payment" value="cash"> תשלום בעת קבלה</label><div class="secure">🔒 הסליקה האמיתית תחובר בשלב הבא דרך ספק הסליקה שלך.</div></div><button class="primary" onclick="sendOrder()">המשך לתשלום / שליחת הזמנה</button>`:""}`;
+ document.getElementById("modal").classList.add("show");
+}
+function sendOrder(){
+ const note=document.getElementById("customerNote")?.value||"",pay=document.querySelector('input[name="payment"]:checked')?.value||"online";
+ let t="שלום! הזמנה מ'עד הבית':\n\n"+cart.map((x,i)=>`${i+1}. ${x.name} — ${x.price} ₪\n${x.details}`).join("\n\n");
+ t+=`\n\nסה"כ: ${cart.reduce((a,x)=>a+x.price,0)} ₪\nתשלום: ${pay==="online"?"אשראי אונליין":"בעת הקבלה"}`+(note?`\nהערה כללית: ${note}`:"");
+ window.open("https://wa.me/972556652149?text="+encodeURIComponent(t),"_blank");
+ cart=[];update();closeModal();alert("ההזמנה הוכנה ונשלחה לוואטסאפ. הסל אופס.");
+}
+function closeModal(){document.getElementById("modal").classList.remove("show")}
+</script>
+</body></html>
